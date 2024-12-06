@@ -31,9 +31,11 @@ class yuanchuangli():
         headers={
             'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0'
         }
-        basic_tools.create_dir(file_path)
+        basic_tools.createDir(file_path)
         img_list=[]
         total=len(pic_list)
+        if total<self.totalPages:
+            print('该文档有付费预览内容，已保存所有预览部分')
         for i,pic in enumerate(pic_list):
             binnary_data=requests.get('https:' + pic, headers=headers).content
             img_list.append(Image.open(io.BytesIO(binnary_data)).convert("RGB"))
@@ -57,7 +59,7 @@ class yuanchuangli():
                 count += 1
                 # 强制点击
                 self.driver.execute_script("arguments[0].click();", btn_remain)
-                time.sleep(2)
+                time.sleep(0.2)
                 del btn_remain
             except Exception:
                 print('已打开所有预览')
@@ -71,10 +73,10 @@ class yuanchuangli():
         """
         items = self.driver.find_elements(By.CLASS_NAME, "webpreview-item")
         for i, item in enumerate(items):
-            print(f'翻到第{i}页')
+            print(f'翻到第{i+1}页')
             # 滚动到元素可见
             self.driver.execute_script("arguments[0].scrollIntoView(true);", item)
-            time.sleep(2)
+            time.sleep(0.5)
         time.sleep(2)
 
     def main(self):
