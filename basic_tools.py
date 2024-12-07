@@ -1,4 +1,5 @@
 import os
+from enum import Enum
 import time
 import cv2
 import numpy as np
@@ -6,6 +7,13 @@ import random
 import base64
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support import expected_conditions as EC
+
+class elements(Enum):
+    ID=1
+    CSS=2
+    XPATH=3
+    CLASSNAME=4
 def createDir(path: str):
     """
     若不存在传入的path，就创建目录
@@ -13,10 +21,19 @@ def createDir(path: str):
     if not os.path.exists(path):
         os.makedirs(path)
 
-def saveCanvas(driver,canvas_id):
-
+def saveCanvas(driver,wait,canvasX,mode=elements.ID):
 # 获取 Canvas 元素的 Base64 数据
-    canvas = driver.find_element(By.ID,canvas_id)
+    if mode==elements.ID:
+        canvas = wait.until(EC.presence_of_element_located((By.ID,canvasX)))
+    elif mode==elements.CSS:
+        canvas=wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,canvasX)))
+    elif mode==elements.XPATH:
+        canvas=wait.until(EC.presence_of_element_located((By.XPATH,canvasX)))
+    elif mode==elements.CLASSNAME:
+        canvas=wait.until(EC.presence_of_element_located((By.CLASS_NAME,canvasX)))
+    else:
+        print('传入模式不合法!')
+        return
     # 确保 canvas 元素已正确选择
     # 翻到该页
     driver.execute_script("arguments[0].scrollIntoView(true);", canvas)
@@ -24,14 +41,14 @@ def saveCanvas(driver,canvas_id):
     if canvas:
         # 获取 Canvas 元素的 Base64 数据
         canvas_data_url = driver.execute_script("""
-            var canvas = document.getElementById(arguments[0]);
+            canvas=arguments[0]
             var ctx = canvas.getContext('2d');  // 获取 2D 上下文
             if (canvas && canvas.toDataURL) {
                 return canvas.toDataURL('image/png');
             } else {
                 return null;
             }
-        """, canvas_id)
+        """, canvas)
 
         if canvas_data_url:
             # 提取 Base64 编码数据

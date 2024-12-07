@@ -45,8 +45,9 @@ class baiduWenku():
         for i in range(1,self.totalPages+1):
             canvas_id='original-creader-canvas-'+str(i)
             try:
-                img_list.append(Image.open(io.BytesIO(basic_tools.saveCanvas(self.driver,canvas_id))))
-            except :
+                img_list.append(Image.open(io.BytesIO(basic_tools.saveCanvas(self.driver,self.wait,canvas_id))))
+            except Exception as e:
+                print(e)
                 print('该文档有付费预览内容，已保存所有预览部分')
                 break
 

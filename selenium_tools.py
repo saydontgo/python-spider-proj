@@ -7,8 +7,6 @@ def getdriver(url, timeout):
     """
     options = webdriver.EdgeOptions()
     options.add_argument('--headless')
-    # options.add_argument(f'referer="{url}"')
-
     options.add_argument("--disable-web-security")  # 忽略跨域限制
     driver = webdriver.Edge(options=options)
     driver.get(url)
