@@ -25,6 +25,10 @@ class Docin():
         return int(re.findall('<span>(.*?)</span>页',self.driver.page_source)[0])
 
     def login(self):
+        """
+        登录豆丁网
+        :return:
+        """
         loginOuterBtn=self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'body > div.head_wrapper > div > div.top_nav_wrap > div.nav_end_bd.nav_end_sty2 > div.top_nav_item > ul > li:nth-child(3) > a')))
         loginOuterBtn.click()
         userID=self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'#username_new')))

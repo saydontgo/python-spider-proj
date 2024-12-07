@@ -10,14 +10,18 @@ from selenium_tools import getdriver
 from list_tool_box import list2set
 
 
-class yuanchuangli():
+class renrendoc():
 
     def __init__(self,url,file_path):
         self.url=url
         self.file_path=file_path
+        self.driver,self.wait=getdriver(self.url,5)
+        self.title=self.driver.title
+        self.totalPages=self.getTotalPages()
+        print(f'本文档有{self.totalPages}页')
 
     def getTotalPages(self):
-        return int(re.findall('"counts"> / (.*?)</span>',self.driver.page_source)[0])
+        return int(re.findall('<span>页数：(.*?)</span>',self.driver.page_source)[0])
     def savePictures(self,pic_list:list,file_path,pdf_name):
         """
         将传入的照片url的照片存入固定文件夹
@@ -39,6 +43,7 @@ class yuanchuangli():
                 print(f'存入进度：{i+1}/{total}')
             except:
                 print('网速太慢了，该页下载失败😔')
+
         img_list[0].save(file_path+pdf_name+'.pdf', "PDF",resolution=100.0,save_all=True, append_images=img_list[1:])
 
     def openAllPages(self):
@@ -49,10 +54,10 @@ class yuanchuangli():
         :return:
         """
         count = 1
-        while True:
+        while len(re.findall('全文预览已结束',self.driver.page_source))<1:
             try:
                 btn_remain = self.wait.until(
-                    EC.presence_of_element_located((By.XPATH, '/html/body/div[3]/div[1]/div[4]/div[3]/div/button')))
+                    EC.presence_of_element_located((By.XPATH, '/html/body/div/div[2]/div/div[1]/div[2]/div[2]/div/span[3]')))
                 self.driver.execute_script("arguments[0].scrollIntoView(true);", btn_remain)
                 print(f'点击第{count}次预览')
                 count += 1
@@ -61,43 +66,39 @@ class yuanchuangli():
                 time.sleep(0.2)
                 del btn_remain
             except Exception:
-                print('已打开所有预览')
+                print('网速太慢，请重试')
                 break
+        print('已打开所有预览')
 
     def scrollToPages(self):
         """
-        让所有的图片开始加载
-        :param driver:
+        让所有的图片开始加载，并返回所有页面的图片url列表
         :return:
         """
+        time.sleep(3)
         items = self.driver.find_elements(By.CLASS_NAME, "webpreview-item")
         for i, item in enumerate(items):
             print(f'翻到第{i+1}页')
             # 滚动到元素可见
             self.driver.execute_script("arguments[0].scrollIntoView(true);", item)
-            time.sleep(0.5)
+            time.sleep(0.9)
         time.sleep(2)
 
     def main(self):
-        self.driver,self.wait=getdriver(self.url,5)
-        self.title=self.driver.title
-        self.totalPages=self.getTotalPages()
-        print(f'本文档有{self.totalPages}页')
         self.openAllPages()
         self.scrollToPages()
 
         source = self.driver.page_source
-        all_pictures=re.findall('src="(//view-cache.*?)"',source)
+        all_pictures=re.findall('src="(//file4\\.renrendoc.*?)"',source)
         all_pictures=list2set(all_pictures)
         self.savePictures(all_pictures,self.file_path,self.title)
 
 if __name__ == '__main__':
-    # https: // max.book118.com / html / 2018 / 1026 / 5302042132001323.shtm
-    url=input('输入你的url')
+    url=input('输入你的url:')
     # file_path=input('输入你想存入的位置：')
     # pdf_name=input('输入保存的pdf名字')
     # timeout=int(input('输入你的timeout'))
     # main(url,file_path,pdf_name,timeout)
-    y=yuanchuangli(url,'./pic/')
+    y=renrendoc(url,'./renrendoc/')
     y.main()
 

@@ -2,6 +2,7 @@ import yuanchuangli
 import wenku
 import doc88
 import docin
+import renrendoc
 url=input('输入你的url:')
 # file_path=input('输入你想存入的位置：')
 if url.find('max.book118')>0:
@@ -28,6 +29,9 @@ elif url.find('www.docin')>0:
             break
     docin=docin.Docin(url,'./docin/',userID,passwd)
     docin.main()
+elif url.find('renrendoc')>0:
+    renren=renrendoc.renrendoc(url,'./renrendoc/')
+    renren.main()
 else:
     print('未识别出文档对应的网站(欢迎告知创作者以补充：)')
     exit(0)
