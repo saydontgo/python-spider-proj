@@ -10,7 +10,7 @@ from selenium_tools import getdriver
 from list_tool_box import list2set
 
 
-class yuanchuangli():
+class goldenhoe():
 
     def __init__(self,url,file_path):
         self.url=url
@@ -38,10 +38,10 @@ class yuanchuangli():
             print('该文档有付费预览内容，已保存所有预览部分')
         for i,pic in enumerate(pic_list):
             try:
-                binnary_data=requests.get('https:' + pic, headers=headers).content
+                binnary_data=requests.get(pic, headers=headers).content
                 img_list.append(Image.open(io.BytesIO(binnary_data)).convert("RGB"))
                 print(f'存入进度：{i+1}/{total}')
-            except:
+            except Exception:
                 print('网速太慢了，该页下载失败😔')
         img_list[0].save(file_path+pdf_name+'.pdf', "PDF",resolution=100.0,save_all=True, append_images=img_list[1:])
 
@@ -53,10 +53,10 @@ class yuanchuangli():
         :return:
         """
         count = 1
-        while True:
+        while len(re.findall('下载文档到电脑',self.driver.page_source))>0:
             try:
                 btn_remain = self.wait.until(
-                    EC.presence_of_element_located((By.XPATH, '/html/body/div[3]/div[1]/div[4]/div[3]/div/button')))
+                    EC.presence_of_element_located((By.CSS_SELECTOR, '#ntip2 > span > span.fc2e')))
                 self.driver.execute_script("arguments[0].scrollIntoView(true);", btn_remain)
                 print(f'点击第{count}次预览')
                 count += 1
@@ -74,12 +74,12 @@ class yuanchuangli():
         :param driver:
         :return:
         """
-        items = self.driver.find_elements(By.CLASS_NAME, "webpreview-item")
+        items = self.driver.find_elements(By.CLASS_NAME, "outer_page")
         for i, item in enumerate(items):
             print(f'翻到第{i+1}页')
             # 滚动到元素可见
             self.driver.execute_script("arguments[0].scrollIntoView(true);", item)
-            time.sleep(0.5)
+            time.sleep(0.2)
         time.sleep(2)
 
     def main(self):
@@ -87,7 +87,7 @@ class yuanchuangli():
         self.scrollToPages()
 
         source = self.driver.page_source
-        all_pictures=re.findall('src="(//view-cache.*?)"',source)
+        all_pictures=re.findall('src="(https://union.03img.goldhoe.com/.*?)"',source)
         all_pictures=list2set(all_pictures)
         self.savePictures(all_pictures,self.file_path,self.title)
 
@@ -98,6 +98,6 @@ if __name__ == '__main__':
     # pdf_name=input('输入保存的pdf名字')
     # timeout=int(input('输入你的timeout'))
     # main(url,file_path,pdf_name,timeout)
-    y=yuanchuangli(url,'./pic/')
+    y=goldenhoe(url,'./goldenhoe/')
     y.main()
 

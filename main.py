@@ -3,6 +3,7 @@ import wenku
 import doc88
 import docin
 import renrendoc
+import goldenhoe
 url=input('输入你的url:')
 # file_path=input('输入你想存入的位置：')
 if url.find('max.book118')>0:
@@ -32,6 +33,9 @@ elif url.find('www.docin')>0:
 elif url.find('renrendoc')>0:
     renren=renrendoc.renrendoc(url,'./renrendoc/')
     renren.main()
+elif url.find('jinchutou.com')>0:
+    gh=goldenhoe.goldenhoe(url,'./goldenhoe/')
+    gh.main()
 else:
     print('未识别出文档对应的网站(欢迎告知创作者以补充：)')
     exit(0)
