@@ -7,19 +7,20 @@ import io
 import time
 from PIL import Image
 from selenium.webdriver import Keys
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 import selenium_tools
 
 # 打开目标网页
 class Docin():
-    def __init__(self,url,file_path,userID,passwd):
+    def __init__(self,url,file_path,userID,passwd,withhead):
         self.url=url
         self.file_path=file_path
         self.timeout=20
         self.userID=userID
         self.passwd=passwd
-        self.driver,self.wait=selenium_tools.getdriver(self.url,self.timeout)
+        self.driver,self.wait=selenium_tools.getdriver(self.url,self.timeout,withhead)
 
     def getTotalPages(self):
         return int(re.findall('<span>(.*?)</span>页',self.driver.page_source)[0])
@@ -30,14 +31,16 @@ class Docin():
         :return:
         """
         loginOuterBtn=self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'body > div.head_wrapper > div > div.top_nav_wrap > div.nav_end_bd.nav_end_sty2 > div.top_nav_item > ul > li:nth-child(3) > a')))
-        loginOuterBtn.click()
+        self.driver.execute_script('arguments[0].click()',loginOuterBtn)
         userID=self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'#username_new')))
         passwd=self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'#password_new')))
         loginInnerBtn=self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'#loginnew > div.loginSubmitBtn > a.btn.loginBtn')))
 
         userID.send_keys(self.userID)
         passwd.send_keys(self.passwd)
+        time.sleep(1)
         loginInnerBtn.click()
+        time.sleep(10)
         try:
             self.driver.find_element(By.CSS_SELECTOR,'#loginnew > div.loginSubmitBtn > a.btn.loginBtn')
             closeBtn=self.driver.find_element(By.CSS_SELECTOR,'#newlogin > span')
@@ -62,18 +65,27 @@ class Docin():
         if total<self.totalPages:
             print('该文档有付费预览内容，已保存所有预览部分')
         for i,pic in enumerate(pic_list):
-            binnary_data=requests.get('https:' + pic, headers=headers).content
-            img_list.append(Image.open(io.BytesIO(binnary_data)).convert("RGB"))
-            print(f'存入进度：{i+1}/{total}')
+            try:
+                binnary_data=requests.get('https:' + pic, headers=headers).content
+                img_list.append(Image.open(io.BytesIO(binnary_data)).convert("RGB"))
+                print(f'存入进度：{i+1}/{total}')
+            except TimeoutError:
+                print('网速太慢了，第{i+1}页下载失败😔')
         img_list[0].save(file_path+pdf_name+'.pdf', "PDF",resolution=100.0,save_all=True, append_images=img_list[1:])
 
     def saveSpecialPages(self):
-        items = self.driver.find_elements(By.CSS_SELECTOR, ".model.panel.scrollLoading")
-        for i, item in enumerate(items):
-            print(f'翻到第{i+1}页')
-            # 滚动到元素可见
-            self.driver.execute_script("arguments[0].scrollIntoView(true);", item)
-            time.sleep(0.5)
+        try:
+            items = self.driver.find_elements(By.CSS_SELECTOR, ".model.panel.scrollLoading")
+            for i, item in enumerate(items):
+                print(f'翻到第{i+1}页')
+                # 滚动到元素可见
+                self.driver.execute_script("arguments[0].scrollIntoView(true);", item)
+                time.sleep(0.5)
+        except EC.NoSuchElementException:
+            print('网速太慢了，下载失败(・∀・(・∀・(・∀・*)')
+        except Exception as e:
+            print('未知错误：')
+            print(e)
         source = self.driver.page_source
         all_pictures = re.findall('<img.*?onload.*?src="https:(.*?)">', source)
         all_pictures = list2set(all_pictures)
@@ -86,8 +98,8 @@ class Docin():
                 locatBtn=self.wait.until(EC.presence_of_element_located((By.CLASS_NAME,'model-fold-cover-hd')))
                 contBtn=self.wait.until(EC.presence_of_element_located((By.CLASS_NAME,'model-fold-show')))
             except:
-                print('可能触发豆丁网的登录滑动验证机制，需要关闭无头并手动通过验证码')
-                exit(-1)
+                print('可能触发豆丁网的登录滑动验证机制，需要打开有头并手动通过验证码')
+                exit(0)
             self.driver.execute_script("arguments[0].scrollIntoView(true);", locatBtn)
             time.sleep(2)
             contBtn.click()
@@ -95,8 +107,11 @@ class Docin():
         else:
             self.saveSpecialPages()
             return
-
-        inputKey=self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'#page_cur')))
+        try:
+            inputKey=self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'#page_cur')))
+        except TimeoutException:
+            print('网速太慢了，下载失败(・∀・(・∀・(・∀・*)')
+            return
         inputKey.send_keys(Keys.CONTROL, 'a')
         inputKey.send_keys('2')
         inputKey.send_keys(Keys.ENTER)
@@ -117,6 +132,9 @@ class Docin():
                 break
 
             print(f'存入进度：{i}/{self.totalPages}')
+        if len(img_list)==0:
+            print('下载失败😔')
+            exit(0)
         img_list[0].save(self.file_path + self.driver.title+'.pdf', "PDF", resolution=100.0,save_all=True,
                              append_images=img_list[1:])
 
@@ -126,7 +144,6 @@ class Docin():
         self.login()
         self.saveAllPages()
 
-if __name__ == '__main__':
-    url=input('输入你的url：')
-    dn=Docin(url,'./tmp/')
-    dn.main()
+# if __name__ == '__main__':
+#     doc=Docin('https://www.doc88.com/p-73247390214211.html?r=1','',withhead=False)
+#     doc.main()

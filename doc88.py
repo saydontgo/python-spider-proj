@@ -5,13 +5,17 @@ import time
 from selenium.webdriver import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import TimeoutException
 import selenium_tools
 
-class Doc88():
-    def __init__(self,url,file_path):
+class Doc88:
+    def __init__(self,url,file_path,withhead):
         self.url=url
-        self.file_path=file_path
-        self.driver,self.wait=selenium_tools.getdriver(self.url,5)
+        self.file_path:str=file_path
+        self.driver,self.wait=selenium_tools.getdriver(self.url,5,withhead)
+        self.totalPages=self.getTotalPages()
+        print(f'本文档有{self.totalPages}页')
+        print(self.driver.title)
 
     def getTotalPages(self):
         return int(re.findall('页数：(.*?)\n',self.driver.page_source)[0])
@@ -42,20 +46,26 @@ class Doc88():
 
 
     def saveAllPages(self):
-        self.wait.until(EC.presence_of_element_located((By.ID, "pageContainer")))
-        pageNumInput = self.driver.find_element(By.ID, 'pageNumInput')
-        print('正在确保所有页面打开...')
-        for i in range(self.totalPages):
-            pageNumInput.send_keys(Keys.CONTROL, 'a')
-            pageNumInput.send_keys(str(i+1))
-            pageNumInput.send_keys(Keys.ENTER)
-            time.sleep(0.5)
-        print('正在保存中...')
-        self.driver.execute_script("""
-        var keeps = $("#pageContainer").parentsUntil('body').toArray().concat($("#pageContainer").children().toArray())
-        var divs = $("div:not(#pageContainer)").toArray()
-        divs.filter(x => keeps.indexOf(x) < 0).forEach(x => x.remove())
-        """)
+        try:
+            self.wait.until(EC.presence_of_element_located((By.ID, "pageContainer")))
+            pageNumInput = self.driver.find_element(By.ID, 'pageNumInput')
+            print('正在确保所有页面打开...')
+            for i in range(self.totalPages):
+                pageNumInput.send_keys(Keys.CONTROL, 'a')
+                pageNumInput.send_keys(str(i+1))
+                pageNumInput.send_keys(Keys.ENTER)
+                time.sleep(0.5)
+            print('正在保存中...')
+            self.driver.execute_script("""
+            var keeps = $("#pageContainer").parentsUntil('body').toArray().concat($("#pageContainer").children().toArray())
+            var divs = $("div:not(#pageContainer)").toArray()
+            divs.filter(x => keeps.indexOf(x) < 0).forEach(x => x.remove())
+            """)
+        except TimeoutException:
+            print('网速太慢了，下载失败(・∀・(・∀・(・∀・*)')
+        except Exception as e:
+            print('未知错误：')
+            print(e)
         self.saveAsPdf()
 
     def saveAsPdf(self,scale=1.06):
@@ -67,18 +77,15 @@ class Doc88():
             "scale": scale,  # 缩放比例
             "preferCSSPageSize": True  # 根据 CSS 控制页边距
         })
+        basic_tools.createDir(self.file_path)
         # 将 PDF 数据保存到文件
         with open(self.file_path+self.driver.title+'.pdf', "wb") as f:
             f.write(base64.b64decode(result["data"]))
 
     def main(self):
-        self.totalPages=self.getTotalPages()
-        print(f'本文档有{self.totalPages}页')
-        print(self.driver.title)
         self.openAllPages()
         self.saveAllPages()
 
-if __name__ == '__main__':
-    url=input('输入你的url：')
-    doc88=Doc88(url,'./doc88/')
-    doc88.main()
+# if __name__ == '__main__':
+#     doc=Doc88('https://www.doc88.com/p-73247390214211.html?r=1','',withhead=False)
+#     doc.main()

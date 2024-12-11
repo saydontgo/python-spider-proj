@@ -4,6 +4,7 @@ import time
 from PIL import Image
 import requests
 import re
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium_tools import getdriver
@@ -12,10 +13,10 @@ from list_tool_box import list2set
 
 class renrendoc():
 
-    def __init__(self,url,file_path):
+    def __init__(self,url,file_path,withhead):
         self.url=url
         self.file_path=file_path
-        self.driver,self.wait=getdriver(self.url,5)
+        self.driver,self.wait=getdriver(self.url,5,withhead)
         self.title=self.driver.title
         self.totalPages=self.getTotalPages()
         print(f'本文档有{self.totalPages}页')
@@ -35,6 +36,9 @@ class renrendoc():
         img_list=[]
         total=len(pic_list)
         if total<self.totalPages:
+            if total==0:
+                print('下载失败😔')
+                exit(0)
             print('该文档有付费预览内容，已保存所有预览部分')
         for i,pic in enumerate(pic_list):
             try:
@@ -49,13 +53,13 @@ class renrendoc():
     def openAllPages(self):
         """
         点开所有预览按钮
-        :param driver:
-        :param wait:
         :return:
         """
         count = 1
-        while len(re.findall('全文预览已结束',self.driver.page_source))<1:
+        while len(re.findall('全文预览已结束',self.driver.page_source))<1 :
             try:
+                if len(re.findall('免费预览已结束',self.driver.page_source))<1:
+                    return
                 btn_remain = self.wait.until(
                     EC.presence_of_element_located((By.XPATH, '/html/body/div/div[2]/div/div[1]/div[2]/div[2]/div/span[3]')))
                 self.driver.execute_script("arguments[0].scrollIntoView(true);", btn_remain)
@@ -76,7 +80,11 @@ class renrendoc():
         :return:
         """
         time.sleep(3)
-        items = self.driver.find_elements(By.CLASS_NAME, "webpreview-item")
+        try:
+            items = self.driver.find_elements(By.CLASS_NAME, "webpreview-item")
+        except TimeoutException:
+            print('网速太慢了，下载失败(・∀・(・∀・(・∀・*)')
+            return
         for i, item in enumerate(items):
             print(f'翻到第{i+1}页')
             # 滚动到元素可见
@@ -93,12 +101,5 @@ class renrendoc():
         all_pictures=list2set(all_pictures)
         self.savePictures(all_pictures,self.file_path,self.title)
 
-if __name__ == '__main__':
-    url=input('输入你的url:')
-    # file_path=input('输入你想存入的位置：')
-    # pdf_name=input('输入保存的pdf名字')
-    # timeout=int(input('输入你的timeout'))
-    # main(url,file_path,pdf_name,timeout)
-    y=renrendoc(url,'./renrendoc/')
-    y.main()
+
 

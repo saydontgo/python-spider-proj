@@ -18,8 +18,14 @@ def createDir(path: str):
     """
     若不存在传入的path，就创建目录
     """
+    if path=='':
+        return
     if not os.path.exists(path):
-        os.makedirs(path)
+        try:
+            os.makedirs(path)
+        except :
+            print('您传入的路径不合法，无法下载')
+            exit(0)
 
 def saveCanvas(driver,wait,canvasX,mode=elements.ID):
 # 获取 Canvas 元素的 Base64 数据

@@ -4,6 +4,7 @@ import time
 from PIL import Image
 import requests
 import re
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium_tools import getdriver
@@ -12,10 +13,10 @@ from list_tool_box import list2set
 
 class goldenhoe():
 
-    def __init__(self,url,file_path):
+    def __init__(self,url,file_path,withhead):
         self.url=url
         self.file_path=file_path
-        self.driver,self.wait=getdriver(self.url,5)
+        self.driver,self.wait=getdriver(self.url,5,withhead)
         self.title=self.driver.title
         self.totalPages=self.getTotalPages()
         print(f'本文档有{self.totalPages}页')
@@ -35,6 +36,9 @@ class goldenhoe():
         img_list=[]
         total=len(pic_list)
         if total<self.totalPages:
+            if total==0:
+                print('下载失败😔')
+                exit(0)
             print('该文档有付费预览内容，已保存所有预览部分')
         for i,pic in enumerate(pic_list):
             try:
@@ -48,8 +52,6 @@ class goldenhoe():
     def openAllPages(self):
         """
         点开所有预览按钮
-        :param driver:
-        :param wait:
         :return:
         """
         count = 1
@@ -71,10 +73,13 @@ class goldenhoe():
     def scrollToPages(self):
         """
         让所有的图片开始加载
-        :param driver:
         :return:
         """
-        items = self.driver.find_elements(By.CLASS_NAME, "outer_page")
+        try:
+            items = self.driver.find_elements(By.CLASS_NAME, "outer_page")
+        except TimeoutException:
+            print('网速太慢了，下载失败(・∀・(・∀・(・∀・*)')
+            return
         for i, item in enumerate(items):
             print(f'翻到第{i+1}页')
             # 滚动到元素可见
@@ -87,17 +92,9 @@ class goldenhoe():
         self.scrollToPages()
 
         source = self.driver.page_source
-        all_pictures=re.findall('src="(https://union.03img.goldhoe.com/.*?)"',source)
+        all_pictures=re.findall('src="(.*?img.goldhoe.com/.*?)"',source)
         all_pictures=list2set(all_pictures)
         self.savePictures(all_pictures,self.file_path,self.title)
 
-if __name__ == '__main__':
-    # https: // max.book118.com / html / 2018 / 1026 / 5302042132001323.shtm
-    url=input('输入你的url')
-    # file_path=input('输入你想存入的位置：')
-    # pdf_name=input('输入保存的pdf名字')
-    # timeout=int(input('输入你的timeout'))
-    # main(url,file_path,pdf_name,timeout)
-    y=goldenhoe(url,'./goldenhoe/')
-    y.main()
+
 

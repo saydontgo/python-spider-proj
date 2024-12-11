@@ -9,10 +9,10 @@ import selenium_tools
 
 # 打开目标网页
 class baiduWenku():
-    def __init__(self,url,file_path):
+    def __init__(self,url,file_path,withhead):
         self.url=url
         self.file_path=file_path
-        self.driver,self.wait=selenium_tools.getdriver(self.url,5)
+        self.driver,self.wait=selenium_tools.getdriver(self.url,5,withhead)
 
     def getTotalPages(self):
         return int(re.findall('"page":"(.*?)"',self.driver.page_source)[0])
@@ -46,12 +46,14 @@ class baiduWenku():
             canvas_id='original-creader-canvas-'+str(i)
             try:
                 img_list.append(Image.open(io.BytesIO(basic_tools.saveCanvas(self.driver,self.wait,canvas_id))))
-            except Exception as e:
-                print(e)
+            except Exception:
                 print('该文档有付费预览内容，已保存所有预览部分')
                 break
 
             print(f'存入进度：{i}/{self.totalPages}')
+        if len(img_list)==0:
+            print('网速太慢了，下载失败(・∀・(・∀・(・∀・*)')
+            exit(0)
         img_list[0].save(self.file_path + self.driver.title+'.pdf', "PDF", resolution=100.0,save_all=True,
                              append_images=img_list[1:])
 
@@ -61,7 +63,3 @@ class baiduWenku():
         self.openAllPages()
         self.saveAllPages()
 
-if __name__ == '__main__':
-    url=input('输入你的url：')
-    bw=baiduWenku(url,'./wendang/')
-    bw.main()
