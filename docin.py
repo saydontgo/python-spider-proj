@@ -142,6 +142,7 @@ class Docin():
         self.totalPages=self.getTotalPages()
         print(f'本文档有{self.totalPages}页')
         self.saveAllPages()
+        self.driver.quit()
 
 # if __name__ == '__main__':
 #     doc=Docin('https://www.doc88.com/p-73247390214211.html?r=1','',withhead=False)

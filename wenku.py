@@ -21,9 +21,9 @@ class baiduWenku():
 
     def login(self):
         """
-                登录百度文库
-                :return:
-                """
+        登录百度文库
+        :return:
+        """
         loginOuterBtn = self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,
                                                                         '#search-right > div.user-icon-wrap > div > div.user-text')))
         self.driver.execute_script('arguments[0].click()', loginOuterBtn)
@@ -42,6 +42,7 @@ class baiduWenku():
         try:
             self.driver.find_element(By.CSS_SELECTOR, '#TANGRAM__PSP_11__submit')
             closeBtn = self.driver.find_element(By.CSS_SELECTOR, '#TANGRAM__PSP_4__closeBtn')
+            self.driver.save_screenshot("debug_screenshot.png")
             closeBtn.click()
             print('用户名或密码输错，可能只能下载部分文档')
         except:
@@ -93,4 +94,5 @@ class baiduWenku():
         self.login()
         self.openAllPages()
         self.saveAllPages()
+        self.driver.quit()
 

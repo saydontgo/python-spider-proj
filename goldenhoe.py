@@ -95,6 +95,6 @@ class goldenhoe():
         all_pictures=re.findall('src="(.*?union.*?goldhoe.com/.*?)"',source)
         all_pictures=list2set(all_pictures)
         self.savePictures(all_pictures,self.file_path,self.title)
-
+        self.driver.quit()
 
 

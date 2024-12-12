@@ -68,7 +68,7 @@ class Doc88:
             print(e)
         self.saveAsPdf()
 
-    def saveAsPdf(self,scale=0.95):
+    def saveAsPdf(self,scale=0.9):
         # 使用 DevTools Protocol 的 printToPDF
         result =self.driver.execute_cdp_cmd("Page.printToPDF", {
             "landscape": False,  # 是否横向打印
@@ -85,6 +85,7 @@ class Doc88:
     def main(self):
         self.openAllPages()
         self.saveAllPages()
+        self.driver.quit()
 
 # if __name__ == '__main__':
 #     doc=Doc88('https://www.doc88.com/p-73247390214211.html?r=1','',withhead=False)

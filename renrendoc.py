@@ -102,6 +102,6 @@ class renrendoc():
         all_pictures.extend(re.findall('src="(//view.*?renrendoc.*?)"',source))
         all_pictures=list2set(all_pictures)
         self.savePictures(all_pictures,self.file_path,self.title)
-
+        self.driver.quit()
 
 
