@@ -28,9 +28,8 @@ class Docin():
     def login(self):
         """
         登录豆丁网
-        :return:
         """
-        loginOuterBtn=self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'body > div.head_wrapper > div > div.top_nav_wrap > div.nav_end_bd.nav_end_sty2 > div.top_nav_item > ul > li:nth-child(3) > a')))
+        loginOuterBtn=self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'body > div.head_wrapper > div > div.top_nav_wrap > div.nav_end_bd.nav_end_sty2 > div.top_nav_item > ul > li:nth-child(3) > a')))
         self.driver.execute_script('arguments[0].click()',loginOuterBtn)
         userID=self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'#username_new')))
         passwd=self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'#password_new')))
@@ -93,20 +92,21 @@ class Docin():
     def saveAllPages(self):
         basic_tools.createDir(self.file_path)
         img_list=[]
-        if len(re.findall('超出预览范围',self.driver.page_source))<1:
-            try:
-                locatBtn=self.wait.until(EC.presence_of_element_located((By.CLASS_NAME,'model-fold-cover-hd')))
-                contBtn=self.wait.until(EC.presence_of_element_located((By.CLASS_NAME,'model-fold-show')))
-            except:
-                print('可能触发豆丁网的登录滑动验证机制，需要打开有头并手动通过验证码')
-                exit(0)
-            self.driver.execute_script("arguments[0].scrollIntoView(true);", locatBtn)
-            time.sleep(2)
-            contBtn.click()
-            time.sleep(2)
-        else:
+        if len(re.findall('超出预览范围',self.driver.page_source))>0:
             self.saveSpecialPages()
             return
+
+        self.login()
+        try:
+            contBtn = self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'model-fold-show')))
+        except:
+            print('可能触发豆丁网的登录滑动验证机制，需要打开有头并手动通过验证码')
+            exit(0)
+        self.driver.execute_script("arguments[0].scrollIntoView(true);", contBtn)
+        time.sleep(2)
+        self.driver.execute_script("arguments[0].click();", contBtn)
+        time.sleep(2)
+
         try:
             inputKey=self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'#page_cur')))
         except TimeoutException:
@@ -141,7 +141,6 @@ class Docin():
     def main(self):
         self.totalPages=self.getTotalPages()
         print(f'本文档有{self.totalPages}页')
-        self.login()
         self.saveAllPages()
 
 # if __name__ == '__main__':
