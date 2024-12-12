@@ -70,7 +70,7 @@ class Docin():
                 img_list.append(Image.open(io.BytesIO(binnary_data)).convert("RGB"))
                 print(f'存入进度：{i+1}/{total}')
             except TimeoutError:
-                print('网速太慢了，第{i+1}页下载失败😔')
+                print(f'网速太慢了，第{i+1}页下载失败😔')
         img_list[0].save(file_path+pdf_name+'.pdf', "PDF",resolution=100.0,save_all=True, append_images=img_list[1:])
 
     def saveSpecialPages(self):

@@ -9,14 +9,44 @@ import selenium_tools
 
 # 打开目标网页
 class baiduWenku():
-    def __init__(self,url,file_path,withhead):
+    def __init__(self,url,file_path,userID,passwd,withhead):
         self.url=url
         self.file_path=file_path
+        self.userID=userID
+        self.passwd=passwd
         self.driver,self.wait=selenium_tools.getdriver(self.url,5,withhead)
 
     def getTotalPages(self):
         return int(re.findall('"page":"(.*?)"',self.driver.page_source)[0])
 
+    def login(self):
+        """
+                登录百度文库
+                :return:
+                """
+        loginOuterBtn = self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,
+                                                                        '#search-right > div.user-icon-wrap > div > div.user-text')))
+        self.driver.execute_script('arguments[0].click()', loginOuterBtn)
+        userID = self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '#TANGRAM__PSP_11__userName')))
+        passwd = self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '#TANGRAM__PSP_11__password')))
+        loginInnerBtn = self.wait.until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, '#TANGRAM__PSP_11__submit')))
+        agreeBtn=self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '#TANGRAM__PSP_11__isAgree')))
+        userID.send_keys(self.userID)
+        passwd.send_keys(self.passwd)
+        time.sleep(1)
+        agreeBtn.click()
+        time.sleep(1)
+        loginInnerBtn.click()
+        time.sleep(5)
+        try:
+            self.driver.find_element(By.CSS_SELECTOR, '#TANGRAM__PSP_11__submit')
+            closeBtn = self.driver.find_element(By.CSS_SELECTOR, '#TANGRAM__PSP_4__closeBtn')
+            closeBtn.click()
+            print('用户名或密码输错，可能只能下载部分文档')
+        except:
+            pass
+        time.sleep(2)
     def openAllPages(self):
         count = 1
         while True:
@@ -60,6 +90,7 @@ class baiduWenku():
     def main(self):
         self.totalPages=self.getTotalPages()
         print(f'本文档有{self.totalPages}页')
+        self.login()
         self.openAllPages()
         self.saveAllPages()
 

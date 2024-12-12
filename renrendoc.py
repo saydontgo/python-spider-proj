@@ -46,7 +46,7 @@ class renrendoc():
                 img_list.append(Image.open(io.BytesIO(binnary_data)).convert("RGB"))
                 print(f'存入进度：{i+1}/{total}')
             except:
-                print('网速太慢了，该页下载失败😔')
+                print(f'网速太慢了，第{i+1}页下载失败😔')
 
         img_list[0].save(file_path+pdf_name+'.pdf', "PDF",resolution=100.0,save_all=True, append_images=img_list[1:])
 
@@ -56,21 +56,22 @@ class renrendoc():
         :return:
         """
         count = 1
-        while len(re.findall('全文预览已结束',self.driver.page_source))<1 :
+        while len(re.findall('全文预览已结束',self.driver.page_source))<1 and  len(re.findall('免费预览已结束',self.driver.page_source))<1:
             try:
-                if len(re.findall('免费预览已结束',self.driver.page_source))<1:
-                    return
                 btn_remain = self.wait.until(
-                    EC.presence_of_element_located((By.XPATH, '/html/body/div/div[2]/div/div[1]/div[2]/div[2]/div/span[3]')))
+                    EC.presence_of_element_located((By.CSS_SELECTOR, '#load_preview_btn')))
                 self.driver.execute_script("arguments[0].scrollIntoView(true);", btn_remain)
                 print(f'点击第{count}次预览')
                 count += 1
+                if count>self.totalPages:
+                    print('爬取失败，请重试')
+                    exit(0)
                 # 强制点击
                 self.driver.execute_script("arguments[0].click();", btn_remain)
                 time.sleep(0.2)
                 del btn_remain
             except Exception:
-                print('网速太慢，请重试')
+                print('网速太慢或只能预览到此')
                 break
         print('已打开所有预览')
 
@@ -97,7 +98,8 @@ class renrendoc():
         self.scrollToPages()
 
         source = self.driver.page_source
-        all_pictures=re.findall('src="(//file4\\.renrendoc.*?)"',source)
+        all_pictures=re.findall('src="(//file.*?renrendoc.*?)"',source)
+        all_pictures.extend(re.findall('src="(//view.*?renrendoc.*?)"',source))
         all_pictures=list2set(all_pictures)
         self.savePictures(all_pictures,self.file_path,self.title)
 

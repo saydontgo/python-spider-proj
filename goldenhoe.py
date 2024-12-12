@@ -46,7 +46,7 @@ class goldenhoe():
                 img_list.append(Image.open(io.BytesIO(binnary_data)).convert("RGB"))
                 print(f'存入进度：{i+1}/{total}')
             except Exception:
-                print('网速太慢了，该页下载失败😔')
+                print(f'网速太慢了，第{i+1}页下载失败😔')
         img_list[0].save(file_path+pdf_name+'.pdf', "PDF",resolution=100.0,save_all=True, append_images=img_list[1:])
 
     def openAllPages(self):
@@ -92,7 +92,7 @@ class goldenhoe():
         self.scrollToPages()
 
         source = self.driver.page_source
-        all_pictures=re.findall('src="(.*?img.goldhoe.com/.*?)"',source)
+        all_pictures=re.findall('src="(.*?union.*?goldhoe.com/.*?)"',source)
         all_pictures=list2set(all_pictures)
         self.savePictures(all_pictures,self.file_path,self.title)
 
