@@ -87,7 +87,7 @@ class renrendoc():
             print('网速太慢了，下载失败(・∀・(・∀・(・∀・*)')
             return
         for i, item in enumerate(items):
-            print(f'翻到第{i+1}页')
+            print(f'翻到第{i+5}页')
             # 滚动到元素可见
             self.driver.execute_script("arguments[0].scrollIntoView(true);", item)
             time.sleep(0.9)
