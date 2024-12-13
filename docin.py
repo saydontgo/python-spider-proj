@@ -101,6 +101,7 @@ class Docin():
             contBtn = self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'model-fold-show')))
         except:
             print('可能触发豆丁网的登录滑动验证机制，需要打开有头并手动通过验证码')
+            self.driver.quit()
             exit(0)
         self.driver.execute_script("arguments[0].scrollIntoView(true);", contBtn)
         time.sleep(2)
@@ -134,6 +135,7 @@ class Docin():
             print(f'存入进度：{i}/{self.totalPages}')
         if len(img_list)==0:
             print('下载失败😔')
+            self.driver.quit()
             exit(0)
         img_list[0].save(self.file_path + self.driver.title+'.pdf', "PDF", resolution=100.0,save_all=True,
                              append_images=img_list[1:])

@@ -38,6 +38,7 @@ class renrendoc():
         if total<self.totalPages:
             if total==0:
                 print('下载失败😔')
+                self.driver.quit()
                 exit(0)
             print('该文档有付费预览内容，已保存所有预览部分')
         for i,pic in enumerate(pic_list):
@@ -65,6 +66,7 @@ class renrendoc():
                 count += 1
                 if count>self.totalPages:
                     print('爬取失败，请重试')
+                    self.driver.quit()
                     exit(0)
                 # 强制点击
                 self.driver.execute_script("arguments[0].click();", btn_remain)

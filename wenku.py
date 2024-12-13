@@ -2,51 +2,73 @@ import basic_tools
 import re
 import io
 import time
+import threading
+from queue import Queue
 from PIL import Image
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 import selenium_tools
 
-# 打开目标网页
 class baiduWenku():
-    def __init__(self,url,file_path,userID,passwd,withhead):
+    def __init__(self, url, file_path, userID, passwd, event:threading.Event, resultEvent:threading.Event, inputQueue:Queue, withhead):
         self.url=url
         self.file_path=file_path
         self.userID=userID
         self.passwd=passwd
+        self.event=event
+        self.resultEvent=resultEvent
+        self.inputQueue=inputQueue
         self.driver,self.wait=selenium_tools.getdriver(self.url,5,withhead)
 
     def getTotalPages(self):
         return int(re.findall('"page":"(.*?)"',self.driver.page_source)[0])
-
+    def handleVerification(self):
+        verifybtn = self.driver.find_element(By.CSS_SELECTOR, '#goToVerify')
+        verifybtn.click()
+        time.sleep(2)
+        codeInput = self.driver.find_element(By.CSS_SELECTOR, '#passAuthVcode')
+        self.event.set()
+        self.resultEvent.wait()
+        codeInput.send_keys(self.inputQueue.get())
+        nextstep=self.driver.find_element(By.CSS_SELECTOR, '#passAuthSubmitCode')
+        nextstep.click()
+        self.driver.save_screenshot("debug_screenshot3.png")
     def login(self):
         """
         登录百度文库
         :return:
         """
-        loginOuterBtn = self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,
-                                                                        '#search-right > div.user-icon-wrap > div > div.user-text')))
-        self.driver.execute_script('arguments[0].click()', loginOuterBtn)
-        userID = self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '#TANGRAM__PSP_11__userName')))
-        passwd = self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '#TANGRAM__PSP_11__password')))
-        loginInnerBtn = self.wait.until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, '#TANGRAM__PSP_11__submit')))
-        agreeBtn=self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '#TANGRAM__PSP_11__isAgree')))
-        userID.send_keys(self.userID)
-        passwd.send_keys(self.passwd)
-        time.sleep(1)
-        agreeBtn.click()
-        time.sleep(1)
-        loginInnerBtn.click()
+        try:
+            loginOuterBtn = self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,
+                                                                            '#search-right > div.user-icon-wrap > div > div.user-text')))
+            self.driver.execute_script('arguments[0].click()', loginOuterBtn)
+            userID = self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '#TANGRAM__PSP_11__userName')))
+            passwd = self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '#TANGRAM__PSP_11__password')))
+            loginInnerBtn = self.wait.until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, '#TANGRAM__PSP_11__submit')))
+            agreeBtn=self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '#TANGRAM__PSP_11__isAgree')))
+            userID.send_keys(self.userID)
+            passwd.send_keys(self.passwd)
+            time.sleep(1)
+            agreeBtn.click()
+            time.sleep(1)
+            loginInnerBtn.click()
+        except:
+            print('页面没有加载完全,下载失败')
+            self.driver.quit()
+            exit(0)
         time.sleep(5)
         try:
             self.driver.find_element(By.CSS_SELECTOR, '#TANGRAM__PSP_11__submit')
             closeBtn = self.driver.find_element(By.CSS_SELECTOR, '#TANGRAM__PSP_4__closeBtn')
-            self.driver.save_screenshot("debug_screenshot.png")
             closeBtn.click()
             print('用户名或密码输错，可能只能下载部分文档')
         except:
-            pass
+            try:
+                self.handleVerification()
+            except Exception as e:
+                print(e)
+                pass
         time.sleep(2)
     def openAllPages(self):
         count = 1
@@ -84,6 +106,7 @@ class baiduWenku():
             print(f'存入进度：{i}/{self.totalPages}')
         if len(img_list)==0:
             print('网速太慢了，下载失败(・∀・(・∀・(・∀・*)')
+            self.driver.quit()
             exit(0)
         img_list[0].save(self.file_path + self.driver.title+'.pdf', "PDF", resolution=100.0,save_all=True,
                              append_images=img_list[1:])
