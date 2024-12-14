@@ -66,18 +66,21 @@ class baiduWenku():
             print('用户名或密码输错，可能只能下载部分文档')
         except:
             try:
-                print('进入验证码验证阶段')
                 self.handleVerification()
-            except Exception as e:
-                print(e)
+            except:
+                pass
 
         time.sleep(2)
     def openAllPages(self):
         count = 1
+        if len(re.findall('退出编辑',self.driver.page_source))>0:
+            btn_out=self.wait.until(
+                    EC.presence_of_element_located((By.CLASS_NAME, 'edit-btn')))
+            btn_out.click()
         while True:
             try:
                 btn_remain = self.wait.until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, '.unfold, .read-all')))
+                    EC.presence_of_element_located((By.CSS_SELECTOR, '.btn.unfold')))
                 self.driver.execute_script("arguments[0].scrollIntoView(true);", btn_remain)
                 print(f'点击第{count}次预览')
                 count += 1
