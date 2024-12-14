@@ -32,7 +32,8 @@ class baiduWenku():
         codeInput.send_keys(self.inputQueue.get())
         nextstep=self.driver.find_element(By.CSS_SELECTOR, '#passAuthSubmitCode')
         nextstep.click()
-        self.driver.save_screenshot("debug_screenshot3.png")
+        time.sleep(5)
+        # self.driver.save_screenshot("debug_screenshot3.png")
     def login(self):
         """
         登录百度文库
@@ -65,10 +66,11 @@ class baiduWenku():
             print('用户名或密码输错，可能只能下载部分文档')
         except:
             try:
+                print('进入验证码验证阶段')
                 self.handleVerification()
             except Exception as e:
                 print(e)
-                pass
+
         time.sleep(2)
     def openAllPages(self):
         count = 1

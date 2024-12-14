@@ -22,6 +22,7 @@ def getdriver(url, timeout,withhead:bool):
     driver = webdriver.Edge(options=options)
 
     try:
+        print('正在打开网页...')
         driver.get(url)
     except Exception as e:
         print('无法打开网页')
