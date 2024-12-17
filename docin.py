@@ -8,6 +8,7 @@ import time
 from PIL import Image
 from selenium.webdriver import Keys
 from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import StaleElementReferenceException
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 import selenium_tools
@@ -123,8 +124,14 @@ class Docin():
             inputKey.send_keys(Keys.ENTER)
             canvas_CSS=f'#img_{str(i)} > div > div > div > canvas'
             try:
-                img_list.append(Image.open(io.BytesIO(basic_tools.saveCanvas(self.driver,self.wait,canvas_CSS,elements.CSS))))
-            except Exception:
+                while True:
+                    try:
+                        img_list.append(Image.open(io.BytesIO(basic_tools.saveCanvas(self.driver, self.wait, canvas_CSS, elements.CSS))))
+                        break
+                    except StaleElementReferenceException:
+                        continue
+            except Exception as e:
+                print(e)
                 print('正在保存已下载部分...')
                 print('无法继续下载，有以下可能原因：')
                 print('1.您未成功登录')
