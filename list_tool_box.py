@@ -4,9 +4,8 @@ def exist_in_list(item,your_list:list):
     :param your_list:
     :return: bool
     """
-    for i in your_list:
-        if i==item:
-            return True
+    if item in your_list:
+        return True
     return False
 
 def list2set(your_list:list):
